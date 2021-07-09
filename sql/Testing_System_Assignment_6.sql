@@ -18,7 +18,7 @@ use Testing_system;
         END$$
  DELIMITER ;
  
- CALL proc_get_account('Phòng marketing');pro2
+ CALL proc_get_account('Phòng marketing');
  
  -- Question 2: Tạo store để in ra số lượng account trong mỗi group
   DROP PROCEDURE IF EXISTS pro2;
@@ -206,30 +206,27 @@ DELIMITER ;
 
 CALL proc9(11);
 
-
-
-
-
-
-
--- Question 10: Tìm ra các exam được tạo từ 3 năm trước và xóa các exam đó đi (sử 
---  dụng store ở câu 9 để xóa)
+-- Question 10: Tìm ra các exam được tạo từ 3 năm trước và xóa các exam đó đi
 --  Sau đó in số lượng record đã remove từ các table liên quan trong khi 
 --  removing
 DROP PROCEDURE IF EXISTS proc10;
 DELIMITER $$
-		CREATE PROCEDURE proc10()
+		CREATE PROCEDURE proc10(OUT soluong TINYINT UNSIGNED)
 				BEGIN
-						DECLARE ID TINYINT UNSIGNED;
-						
-						CALL proc9((SELECT ExamID 
-									FROM EXAM
-                                    WHERE YEAR(CREATEDATE) = YEAR(NOW())-3));
+                DECLARE soluong TINYINT UNSIGNED;
+					SELECT 		COUNT(*) INTO soluong
+                        FROM 		Exam
+                        WHERE		YEAR(CreateDate) =YEAR(NOW())-3
+                        GROUP BY	YEAR(CreateDate);
+                      DELETE
+                      FROM	Exam
+                      WHERE		YEAR(CreateDate) =YEAR(NOW())-3;
                         
                 END$$
 DELIMITER ;
-
-CALL proc10();
+SET @sl='';
+CALL proc10(@sl);
+SELECT @sl;
 
 
 
@@ -240,9 +237,23 @@ CALL proc10();
 -- Question 11: Viết store cho phép người dùng xóa phòng ban bằng cách người dùng 
 --  nhập vào tên phòng ban và các account thuộc phòng ban đó sẽ được 
 --  chuyển về phòng ban default là phòng ban chờ việc
+DROP PROCEDURE IF EXISTS proc11;
+DELIMITER $$
+			CREATE PROCEDURE	proc11(IN DpName VARCHAR(50))
+				BEGIN
+					DECLARE dpid TINYINT UNSIGNED;
+                    
+                    SET dpid =( SELECT 		DepartmentID
+								FROM 		Department
+                                WHERE		DepartmentName = Dpname);
+                                
+					UPDATE		`Account`
+                    SET			DepartmentID = 12
+                    WHERE		DepartmentID = dpid;
+                END$$
+DELIMITER ;
 
-
-
+CALL proc11('Phòng Thư ký');
 
 
 
@@ -250,11 +261,40 @@ CALL proc10();
 
 
 -- Question 12: Viết store để in ra mỗi tháng có bao nhiêu câu hỏi được tạo trong năm 
- -- nay
+-- nay
+DROP PROCEDURE IF EXISTS proc12;
+ DELIMITER $$
+		CREATE PROCEDURE	proc12()
+				BEGIN
+					SELECT 		MONTH(CREATEDATE),COUNT(*)
+                    FROM		`Question`
+                    WHERE		YEAR(CreateDate) = 2020 -- YEAR(NOW())
+                    GROUP BY	MONTH(CreateDate),YEAR(CreateDate);
+                    
+                
+                END$$
+
+ DELIMITER ;
  
+ Call proc12();
  
  -- Question 13: Viết store để in ra mỗi tháng có bao nhiêu câu hỏi được tạo trong 6 
  -- tháng gần đây nhất
  -- (Nếu tháng nào không có thì sẽ in ra là "không có câu hỏi nào trong 
 -- tháng")
+
+DROP PROCEDURE IF EXISTS proc13;
+ DELIMITER $$
+		CREATE PROCEDURE	proc13()
+				BEGIN
+					SELECT 		MONTH(CREATEDATE),COUNT(*)
+                    FROM		`Question`
+                    WHERE		MONTH(CreateDate) >= MONTH(NOW())-5 AND YEAR(CreateDate) = YEAR(NOW())
+                    GROUP BY	MONTH(CreateDate),YEAR(CreateDate);                   	
+                    
+                
+                END$$
+
+ DELIMITER ;
  
+ Call proc13();
